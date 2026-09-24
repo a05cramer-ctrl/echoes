@@ -1,0 +1,11 @@
+{
+  "name": "clones-app",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "pg": "^8.23.0"
+  }
+}
