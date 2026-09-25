@@ -521,16 +521,15 @@ footer .links{display:flex;gap:8px}
 <section class="hero wrap" id="lab">
   <div class="stage">
     <div class="copy">
-      <span class="chip"><b>REAL</b><span class="long">real wallets ·</span> real trades · paper SOL</span>
+      <span class="chip"><b>LIVE</b><span class="long">real wallets ·</span> real on-chain trades</span>
       <h1><span class="g" data-t="echo">echo</span> <span class="w">any wallet.</span></h1>
-      <p class="sub">Paste a Solana wallet. The lab reads its <b>real on-chain trades</b>, grows a pixel echo with the same habits, and the echo <b>copies every new trade</b> that wallet makes. Live, on paper, for everyone to watch.</p>
+      <p class="sub">Paste a Solana wallet. The lab reads its <b>real on-chain trades</b>, grows a pixel echo with the same habits, and the echo <b>copies every new trade</b> that wallet makes. Live, for everyone to watch.</p>
       <form class="scan" id="scanForm" autocomplete="off">
         <label class="sr" for="wallet">Solana wallet address</label>
         <input id="wallet" name="wallet" placeholder="paste a Solana wallet address…" spellcheck="false" autocapitalize="off">
         <button class="btn" id="scanBtn" type="submit">SCAN</button>
       </form>
       <div class="hints" id="hints"></div>
-      <div class="fine"><span>no wallet connect</span><span>no deposits</span><span>real prices</span></div>
     </div>
     <div class="labwrap">
       <canvas id="labcv" class="px" aria-label="The cloning lab"></canvas>
@@ -631,7 +630,7 @@ footer .links{display:flex;gap:8px}
 <footer>
   <div class="wrap">
     <a class="logo" href="#top"><canvas class="px js-logo" width="18" height="22"></canvas><b>echoes</b></a>
-    <p>Echoes paper-trade: they copy real on-chain trades with paper SOL and never hold funds. Wallet data comes from public Solana transactions. Nothing here is financial advice.</p>
+    <p>echo any wallet. every trade it makes, copied live.</p>
     <div class="links"><a class="pill js-x" target="_blank" rel="noopener">X</a><a class="pill js-chart" target="_blank" rel="noopener">Chart</a><a class="btn sm js-buy" target="_blank" rel="noopener">Buy $ECHO</a></div>
   </div>
 </footer>
@@ -1857,7 +1856,6 @@ const profile = (() => {
       </div>
       <div class="pfoot">
         <button class="btn sm" id="pShare">Share on X</button><button class="btn ghost sm" id="pCopy">Copy link</button><button class="btn ghost sm" id="pScan">Echo this wallet too</button>
-        <span class="note">paper SOL · real trades · real prices</span>
       </div>`;
     sheet.querySelector('.tb').replaceWith(tubeCanvas(c));
     const hu = sheet.querySelector('.hu'); if (hu) hu.replaceWith(avatar(humanLook(c.source_wallet)));
