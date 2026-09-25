@@ -67,4 +67,4 @@ $$('.reveal').forEach((el) => reveal.observe(el));
   const ill = { 1: [humanLook('a1'), null, { h: 2, c: 5, k: '#34e0ff', ghost: '#34e0ff' }], 2: [{ h: 0, c: 3, k: '#ff5fa2' }], 3: [humanLook('a3'), '→', { h: 4, c: 7, k: '#5cf2a8' }] };
   $$('[data-ill]').forEach((el) => ill[el.dataset.ill].forEach((o) => { if (o === null) return; if (typeof o === 'string') { const b = document.createElement('b'); b.textContent = o; el.append(b); } else el.append(avatar(o)); }));
 })();
-(() => { const tb = $('#truthBot'); const a = avatar({ h: 4, c: 7, k: '#5cf2a8' }); tb.replaceWith(a); })();
+
