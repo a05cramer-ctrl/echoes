@@ -118,7 +118,7 @@ function poke(cv) { if (cv && cv._a) { cv._a.bounce = 0.28; cv._a.happy = 1.2; }
 const botAvatar = (echo, cls) => avatar({ ...look(echo), mood: echo.pnlPct > 5 ? 1 : echo.pnlPct < -5 ? -1 : 0 }, cls);
 
 // logo bots
-$$('.js-logo').forEach((c) => { const a = { cv: c, ctx: c.getContext('2d'), o: { c: 0, k: '#ff5fa2', h: 0, bd: 0 }, ph: R() * 5, blink: 0, lx: 0, ly: 0, nextLook: 2, bounce: 0, happy: 0 }; c._a = a; avatars.add(a); });
+$$('.js-logo').forEach((c) => { const a = { cv: c, ctx: c.getContext('2d'), o: { c: 7, k: '#ff5fa2', h: 0, bd: 0 }, ph: R() * 5, blink: 0, lx: 0, ly: 0, nextLook: 2, bounce: 0, happy: 0 }; c._a = a; avatars.add(a); });
 
 // cached sprite images for canvases that draw many bots
 const sprCache = new Map();
