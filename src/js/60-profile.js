@@ -69,7 +69,6 @@ const profile = (() => {
       </div>
       <div class="pfoot">
         <button class="btn sm" id="pShare">Share on X</button><button class="btn ghost sm" id="pCopy">Copy link</button><button class="btn ghost sm" id="pScan">Echo this wallet too</button>
-        <span class="note">paper SOL · real trades · real prices</span>
       </div>`;
     sheet.querySelector('.tb').replaceWith(tubeCanvas(c));
     const hu = sheet.querySelector('.hu'); if (hu) hu.replaceWith(avatar(humanLook(c.source_wallet)));
