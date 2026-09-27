@@ -23,11 +23,11 @@ const HOODIES = [['#3a4170', '#2b3156'], ['#6b2d5c', '#4f1f44'], ['#1f5c4d', '#1
 
 const BUILDS = {
   Scalper: { h: 0, c: 5, col: '#34e0ff', line: 'In and out in minutes. Lives on the 1m chart.', pick: 'holds ≤ 10 min, 5+ trades a day', size: '1.5× his conviction', range: '4–30% a trade', rule: 'dumps it all when he sells half' },
-  Whale: { h: 1, c: 0, col: '#8b6cff', line: 'Sizes big, trades rarely, moves charts when it does.', pick: 'median buy ≥ 3 SOL', size: '1.5× his conviction', range: '5–50% a trade', rule: 'only copies entries of 1 SOL+' },
-  Sniper: { h: 2, c: 6, col: '#ff4d5e', line: 'Gets in first, gets out fast. Visor never blinks.', pick: 'holds ≤ 1h, wins 50%+', size: '2× his conviction', range: '5–40% a trade', rule: 'first entry only, never adds' },
-  Degen: { h: 3, c: 3, col: '#ff5fa2', line: 'One eye, all in. Buys whatever is moving.', pick: '15+ trades a day, wins < 45%', size: '3× his conviction', range: '6–50% a trade', rule: 'up to half the bag on one coin' },
+  Whale: { h: 1, c: 0, col: '#8b6cff', line: 'Sizes big, trades rarely, moves charts when it does.', pick: 'median buy ≥ 3 SOL', size: '1.5× his conviction', range: '5–50% a trade', rule: 'only copies entries of 1 SOL or more' },
+  Sniper: { h: 2, c: 6, col: '#ff4d5e', line: 'Gets in first, gets out fast. Visor never blinks.', pick: 'holds ≤ 1h, wins 50%+', size: '2× his conviction', range: '5–40% a trade', rule: 'only takes his first entry and never adds' },
+  Degen: { h: 3, c: 3, col: '#ff5fa2', line: 'One eye, all in. Buys whatever is moving.', pick: '15+ trades a day, wins < 45%', size: '3× his conviction', range: '6–50% a trade', rule: 'puts up to half its bag on one coin' },
   Copycat: { h: 4, c: 4, col: '#ffd23f', line: 'Pure mirror. Whatever he does, it does.', pick: 'everyone else', size: '1× his conviction', range: '3–35% a trade', rule: 'mirrors every buy and sell' },
-  Swing: { h: 5, c: 7, col: '#5cf2a8', line: 'Holds for hours or days. Changes the channel, not the coin.', pick: 'holds a day or more', size: '1× his conviction', range: '4–40% a trade', rule: 'holds 30 min min, early sells trim half' },
+  Swing: { h: 5, c: 7, col: '#5cf2a8', line: 'Holds for hours or days. Changes the channel, not the coin.', pick: 'holds a day or more', size: '1× his conviction', range: '4–40% a trade', rule: 'holds at least 30 minutes and only trims on early sells' },
 };
 const BUILD_NAMES = Object.keys(BUILDS);
 const bcol = (b) => (BUILDS[b] || BUILDS.Copycat).col;
@@ -88,12 +88,32 @@ function look(c) {
 }
 function humanLook(wallet) { const h = hash(wallet || 'anon'); return { human: true, hood: h % HOODIES.length, skin: ['#f1c49c', '#e0ac7e', '#c68b59', '#8d5a3b', '#f7d7b5'][(h >>> 5) % 5] }; }
 
-/* ---------- living avatars (feed, board, cards) ---------- */
+/* ---------- living avatars (feed, board, cards) ----------
+   With WebGL up, every avatar is a baked voxel portrait of the same robot that walks the chamber.
+   Without it, the 2D pixel sprite stands in. */
+let BAKER = null;
+const voxLook = (o) => (o.human ? { human: true, hood: o.hood || 0, skin: o.skin || '#e0ac7e' } : { h: o.h || 0, c: o.c || 0, k: o.k || LIGHT[0], bd: o.bd || 0 });
+function voxImg(o, size = 's', opts) { if (!BAKER) return null; try { return BAKER.portrait(voxLook(o), size, opts); } catch { return null; } }
 const avatars = new Set();
-function avatar(o, cls) {
-  const c = document.createElement('canvas'); c.width = 18; c.height = 22; c.className = 'px' + (cls ? ' ' + cls : '');
+function avatar(o, cls, size = 's') {
+  const c = document.createElement('canvas'); c.className = 'px' + (cls ? ' ' + cls : '');
+  const base = voxImg(o, size);
+  if (base) {
+    c.width = base.width; c.height = base.height + 2;
+    if (o.ghost) c.style.cssText = 'opacity:.3;filter:grayscale(1)';
+    const a = { cv: c, ctx: c.getContext('2d'), o, size, base, ph: R() * 10, blink: 0, bounce: 0, happy: 0, vox: true };
+    c._a = a; avatars.add(a); drawVoxAvatar(a, 0); return c;
+  }
+  c.width = 18; c.height = 22;
   const a = { cv: c, ctx: c.getContext('2d'), o, ph: R() * 10, blink: 0, lx: 0, ly: 0, nextLook: R() * 3, bounce: 0, happy: 0 };
   c._a = a; avatars.add(a); drawAvatar(a, 0); return c;
+}
+function drawVoxAvatar(a, T) {
+  const x = a.ctx, blink = a.blink > 0 && !a.o.human;
+  const img = blink ? (a.blinkImg ||= voxImg(a.o, a.size, { blink: true }) || a.base) : (a.happy > 0 || a.o.mood > 0) && !a.o.human ? (a.happyImg ||= voxImg(a.o, a.size, { happy: true }) || a.base) : a.base;
+  const bob = RM ? 1 : ((T * 1.4 + a.ph) | 0) % 2;
+  const y = a.bounce > 0 ? -1 : 1 + bob;
+  x.clearRect(0, 0, a.cv.width, a.cv.height); x.drawImage(img, 0, y);
 }
 function drawAvatar(a, T) {
   const bob = RM ? 0 : ((T * 1.6 + a.ph) | 0) % 2;
@@ -104,21 +124,20 @@ function drawAvatar(a, T) {
   drawBot(a.ctx, 0, y, { ...a.o, t: T, ph: a.ph, blink: a.blink > 0, lx: a.lx, ly: a.ly, happy: a.happy > 0 || (a.o.mood > 0), sad: a.o.mood < 0 && !(a.happy > 0), dim: !a.o.human && ((T * 2 + a.ph) | 0) % 3 === 0 });
   a.ctx.restore();
 }
+let avT = 0;
 function tickAvatars(T, dt) {
+  avT += dt; const redraw = avT > 0.08; if (redraw) avT = 0;
   for (const a of avatars) {
     if (!a.cv.isConnected) { if (a.gone) avatars.delete(a); else a.gone = 1; continue; }
     a.gone = 0;
-    if (a.blink > 0) a.blink -= dt; else if (R() < dt * 0.35) a.blink = 0.14;
+    if (a.blink > 0) a.blink -= dt; else if (R() < dt * 0.3) a.blink = 0.14;
     if (a.bounce > 0) a.bounce -= dt; if (a.happy > 0) a.happy -= dt;
-    a.nextLook -= dt; if (a.nextLook < 0) { a.lx = pick([-1, 0, 0, 1]); a.ly = R() < 0.2 ? -1 : 0; a.nextLook = 1.2 + R() * 2.5; }
-    drawAvatar(a, T);
+    if (!a.vox) { a.nextLook -= dt; if (a.nextLook < 0) { a.lx = pick([-1, 0, 0, 1]); a.ly = R() < 0.2 ? -1 : 0; a.nextLook = 1.2 + R() * 2.5; } }
+    if (redraw || a.bounce > 0) (a.vox ? drawVoxAvatar : drawAvatar)(a, T);
   }
 }
 function poke(cv) { if (cv && cv._a) { cv._a.bounce = 0.28; cv._a.happy = 1.2; } }
-const botAvatar = (echo, cls) => avatar({ ...look(echo), mood: echo.pnlPct > 5 ? 1 : echo.pnlPct < -5 ? -1 : 0 }, cls);
-
-// logo bots
-$$('.js-logo').forEach((c) => { const a = { cv: c, ctx: c.getContext('2d'), o: { c: 7, k: '#ff5fa2', h: 0, bd: 0 }, ph: R() * 5, blink: 0, lx: 0, ly: 0, nextLook: 2, bounce: 0, happy: 0 }; c._a = a; avatars.add(a); });
+const botAvatar = (echo, cls, size) => avatar({ ...look(echo), mood: echo.pnlPct > 5 ? 1 : echo.pnlPct < -5 ? -1 : 0 }, cls, size);
 
 // cached sprite images for canvases that draw many bots
 const sprCache = new Map();

@@ -4,30 +4,52 @@ const profile = (() => {
   let openId = null, timer = 0, tubeDraw = null, lastFocus = null;
 
   function tubeCanvas(c) {
+    const lk = look(c);
+    const frames = BAKER ? (() => { try { return BAKER.turntable(voxLook(lk), 20, 'l'); } catch { return null; } })() : null;
+    if (frames) {
+      const cv = document.createElement('canvas'); cv.className = 'px'; cv.width = frames[0].width; cv.height = frames[0].height + 4;
+      const x = cv.getContext('2d');
+      const crown = S.echoes.length > 1 && [...S.echoes].sort((a, b) => b.pnlPct - a.pnlPct)[0]?.id === c.id;
+      tubeDraw = (t) => {
+        if (!cv.isConnected) return;
+        const f = frames[Math.floor(t * 7) % frames.length], bob = Math.round(Math.sin(t * 2) * 1.5) + 2;
+        x.clearRect(0, 0, cv.width, cv.height); x.drawImage(f, 0, bob);
+        if (crown) drawCrown(x, (cv.width >> 1) - 2, bob + 1);
+      };
+      return cv;
+    }
     const cv = document.createElement('canvas'); cv.className = 'px'; cv.width = 44; cv.height = 60;
-    const x = cv.getContext('2d'), lk = look(c), bubbles = [];
+    const x = cv.getContext('2d');
     tubeDraw = (t) => {
       if (!cv.isConnected) return;
       x.clearRect(0, 0, 44, 60);
-      x.fillStyle = '#3c3673'; x.fillRect(2, 0, 40, 5); x.fillRect(2, 54, 40, 6);
-      x.fillStyle = '#57538a'; x.fillRect(3, 1, 38, 1); x.fillRect(3, 55, 38, 1);
-      x.fillStyle = '#0d1a2c'; x.fillRect(5, 5, 34, 49);
-      x.fillStyle = '#135a73'; x.fillRect(5, 12, 34, 42);
-      x.fillStyle = '#6cebff'; for (let i = 0; i < 34; i += 2) x.fillRect(5 + i, 12 + Math.round(Math.sin(t * 4 + i * 0.5) * 0.6), 2, 1);
-      if (R() < 0.3) bubbles.push({ x: 7 + R() * 30, y: 52, l: 50 });
-      x.fillStyle = '#9ff3ff'; for (let i = bubbles.length - 1; i >= 0; i--) { const b = bubbles[i]; b.y -= 0.5; if (b.y < 13 || --b.l < 0) { bubbles.splice(i, 1); continue; } x.fillRect(Math.round(b.x), Math.round(b.y), 1, 1); }
-      const bob = Math.round(Math.sin(t * 2) * 1.5);
-      drawBot(x, 13, 26 + bob, { ...lk, t, blink: (t % 3) < 0.12, happy: c.pnlPct > 5, sad: c.pnlPct < -5, lx: Math.round(Math.sin(t * 0.7)) });
-      x.globalAlpha = 0.2; x.fillStyle = '#8fe9ff'; x.fillRect(5, 5, 34, 49); x.globalAlpha = 0.5; x.fillStyle = '#e8fbff'; x.fillRect(8, 8, 2, 43); x.globalAlpha = 1;
-      if (S.byId.size && [...S.echoes].sort((a, b) => b.pnlPct - a.pnlPct)[0]?.id === c.id && S.echoes.length > 1) drawCrown(x, 19, 20 + bob);
+      drawBot(x, 13, 26 + Math.round(Math.sin(t * 2) * 1.5), { ...lk, t, blink: (t % 3) < 0.12, happy: c.pnlPct > 5, sad: c.pnlPct < -5 });
     };
     return cv;
   }
 
   function skeleton() {
     sheet.innerHTML = `<button class="x" aria-label="Close">×</button><div class="zero" style="min-height:360px"><i></i><b>opening the tube…</b></div>`;
-    sheet.querySelector('i').replaceWith(avatar({ h: 0, c: 5, k: '#34e0ff' }));
+    sheet.querySelector('i').replaceWith(avatar({ h: 0, c: 5, k: '#34e0ff' }, '', 'm'));
     sheet.querySelector('.x').onclick = close;
+  }
+
+  function pnlChart(trades) {
+    const exits = trades.filter((t) => t.side === 'sell' && t.pnl != null).slice().reverse();
+    if (exits.length < 2) return '';
+    let cum = 0; const pts = [0, ...exits.map((t) => (cum += t.pnl))];
+    const W = 600, H = 100, pad = 6, min = Math.min(0, ...pts), max = Math.max(0, ...pts), rng = max - min || 1;
+    const X = (i) => pad + (i / (pts.length - 1)) * (W - pad * 2), Y = (v) => pad + (1 - (v - min) / rng) * (H - pad * 2);
+    let d = `M${X(0)},${Y(0)}`; pts.forEach((v, i) => { if (i) d += ` H${X(i)} V${Y(v)}`; });
+    const col = cum >= 0 ? '#5cf2a8' : '#ff5f7a';
+    const area = `${d} V${Y(0)} H${X(0)} Z`;
+    return `<div class="pchart"><h4>realized P&amp;L <small>${exits.length} exits · <span class="${cls(cum)}">${fmt.sgn(cum, 3)} SOL</span></small></h4>
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Realized profit over ${exits.length} exits">
+        <line x1="${pad}" x2="${W - pad}" y1="${Y(0)}" y2="${Y(0)}" stroke="#3c3673" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>
+        <path d="${area}" fill="${col}" fill-opacity=".12"/>
+        <path d="${d}" fill="none" stroke="${col}" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+        <circle cx="${X(pts.length - 1)}" cy="${Y(cum)}" r="4" fill="${col}"/>
+      </svg></div>`;
   }
 
   function render(d) {
@@ -38,12 +60,12 @@ const profile = (() => {
     sheet.innerHTML = `
       <button class="x" aria-label="Close">×</button>
       <div class="ptop">
-        <div class="ptube"><i class="tb"></i></div>
+        <div class="ptube" style="--c:${col}"><i class="tb"></i></div>
         <div class="pinfo">
           <div class="meta"><span class="bdg" style="--c:${col}">${esc(c.build)}</span><span>echo of <a href="${solscan.acct(c.source_wallet)}" target="_blank" rel="noopener">${esc(short(c.source_wallet))}</a></span><span>born ${fmt.ago(c.created_at)} ago</span>${c.lastTradeAt ? `<span>last trade ${fmt.ago(c.lastTradeAt)} ago</span>` : ''}</div>
           <h2>${esc(c.name)}</h2>
           <div class="pbig"><div><small>paper value</small><b>${fmt.sol(c.value, 3)} <span style="font-size:.45em;color:var(--ink3)">SOL</span></b></div><div><small>since birth</small><b class="${cls(c.pnlPct)}">${fmt.pct(c.pnlPct)}</b></div></div>
-          <div class="mut" style="font:500 12.5px var(--mono)">${esc(bld.line)} It ${esc(bld.rule)}, ${esc(bld.size)}, ${esc(bld.range)}.</div>
+          <div class="mut" style="font-size:15px;max-width:560px">${esc(bld.line)} It ${esc(bld.rule)} and bets ${esc(bld.size)}, ${esc(bld.range)}.</div>
         </div>
       </div>
       <div class="pgrid">
@@ -53,6 +75,7 @@ const profile = (() => {
         <div><small>trades · W/L</small><b>${c.trades} <span style="font-size:.6em" class="mut">${c.wins || 0}/${c.losses || 0}</span></b></div>
         <div><small>best exit</small><b class="${c.best && c.best.pnlSol > 0 ? 'up' : 'mut'}">${c.best && c.best.pnlSol > 0 ? esc(sym(c.best.symbol)) + ' ' + fmt.sgn(c.best.pnlSol) : '—'}</b></div>
       </div>
+      ${pnlChart(d.trades)}
       <div class="pcols">
         <div>
           <h4>bag</h4>
@@ -78,6 +101,7 @@ const profile = (() => {
     $('#pCopy').onclick = () => copy(url, 'Echo link copied');
     $('#pShare').onclick = () => share(`${c.name} is ${fmt.pct(c.pnlPct)} on paper after ${c.trades} trades, copying ${short(c.source_wallet)} as a ${c.build}.\n\nwatch it live on echoes`, url);
     $('#pScan').onclick = () => { close(); scanFlow.scan(c.source_wallet); };
+    $$('.coin canvas,.sib canvas', sheet).forEach((cv) => (cv.style.width = '26px'));
   }
 
   async function load(id, first) {

@@ -3,14 +3,13 @@ const S = {
   stats: null, echoes: [], byId: new Map(), setup: null,
   setEchoes(list) {
     this.echoes = list; this.byId = new Map(list.map((c) => [c.id, c]));
-    floor.sync(list); board.render(list); renderBuilds(list);
-    lab.showcase([...list].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+    hero.sync(list); board.render(list); renderBuilds(list);
   },
   addEcho(c) {
     const full = { value: 1, pnlPct: 0, trades: 0, wins: 0, losses: 0, realized: 0, cash: 1, positions: [], ...c };
     if (this.byId.has(full.id)) return;
     this.echoes = [full, ...this.echoes]; this.byId.set(full.id, full);
-    floor.enter(full); floor.sync(this.echoes); board.render(this.echoes); renderBuilds(this.echoes);
+    hero.enter(full); hero.sync(this.echoes); board.render(this.echoes); renderBuilds(this.echoes);
     if (this.stats) { this.stats.echoes++; counters.set(this.stats); }
   },
 };
@@ -22,13 +21,13 @@ async function pollStats() {
     const s = await API.get('stats');
     const firstTime = !S.stats; S.stats = s;
     counters.set(s); renderOriginals(s);
-    if (firstTime || document.activeElement?.closest?.('#hints') == null) renderHints(s);
+    if (firstTime || !document.activeElement?.closest?.('#hints')) renderHints(s);
     bootBanner(s.ready && !s.ready.helius ? ['HELIUS_API_KEY'] : null);
     ticker.paint();
   } catch (e) { onErr(e); if (!S.stats) { renderHints(null); renderOriginals(null); } }
 }
 async function pollEchoes() {
-  try { S.setEchoes(await API.get('echoes')); } catch (e) { onErr(e); if (!S.echoes.length) { floor.sync([]); board.render([]); renderBuilds([]); } }
+  try { S.setEchoes(await API.get('echoes')); } catch (e) { onErr(e); if (!S.echoes.length) { hero.sync([]); board.render([]); renderBuilds([]); } }
 }
 async function pollFeed() {
   try { const rows = await API.get('feed'); const first = !feed.items.length; feed.ingest(rows); if (first) ticker.seed(rows); } catch (e) { onErr(e); if (!feed.items.length) feed.paint(); }
@@ -57,10 +56,11 @@ addEventListener('hashchange', route);
 /* ---------- main loop ---------- */
 let T = 0, last = performance.now();
 function loop(now) {
-  const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
-  lab.update(dt); lab.render(T);
-  floor.tick(dt);
+  const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now; T += dt;
+  hero.tick(dt);
   tickAvatars(T, dt);
+  tickTurntables(dt);
+  parade.tick(dt);
   profile.tick(T);
   requestAnimationFrame(loop);
 }
@@ -75,5 +75,5 @@ requestAnimationFrame(loop);
     clearTimeout(off); off = setTimeout(() => document.body.classList.remove('party'), 15000);
   }
   addEventListener('keydown', (e) => { if (e.target.closest?.('input')) return; i = e.key === K[i] || e.key.toLowerCase() === K[i] ? i + 1 : e.key === K[0] ? 1 : 0; if (i === K.length) { i = 0; party(); } });
-  $$('.logo').forEach((l) => l.addEventListener('click', () => { clearTimeout(tapT); tapT = setTimeout(() => (taps = 0), 1200); if (++taps >= 5) { taps = 0; party(); } poke(l.querySelector('canvas')); }));
+  $$('.logo').forEach((l) => l.addEventListener('click', () => { clearTimeout(tapT); tapT = setTimeout(() => (taps = 0), 1200); if (++taps >= 5) { taps = 0; party(); } }));
 })();

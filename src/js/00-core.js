@@ -92,6 +92,7 @@ const sfx = (() => {
   return {
     get on() { return on; },
     blip: () => tone(880, 0.05, 'square', 0.035),
+    echo: () => [0, 1, 2, 3, 4].forEach((i) => tone(660, 0.09, 'square', 0.05 * Math.pow(0.55, i), i * 0.16)),
     scan: () => tone(220 + R() * 60, 0.05, 'sawtooth', 0.02, 0, 300),
     ok: () => seq([659, 784, 988, 1319], 0.07),
     bad: () => seq([330, 247, 196], 0.1, 'sawtooth', 0.04),
@@ -109,7 +110,7 @@ const sfx = (() => {
 const fx = (() => {
   const cv = $('#fx'), ctx = cv.getContext('2d');
   let parts = [], dpr = 1;
-  const COLORS = ['#34e0ff', '#ff5fa2', '#ffd23f', '#5cf2a8', '#8b6cff', '#ff8a3d', '#ffffff'];
+  const COLORS = ['#2ee6ff', '#ff4fa3', '#ffd23f', '#5cf2a8', '#8b6cff', '#ff8a3d', '#ffffff'];
   function size() { dpr = Math.min(2, devicePixelRatio || 1); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; }
   size(); addEventListener('resize', size);
   function burst(x, y, n = 14, spread = 5, colors = COLORS, sz = 5) {
@@ -142,7 +143,7 @@ const fx = (() => {
     requestAnimationFrame(tick);
   }
   tick();
-  addEventListener('pointerdown', (e) => { if (e.target.closest('button,a,input,canvas#labcv,canvas#floor')) burst(e.clientX, e.clientY, 8, 3.2, undefined, 4); });
+  addEventListener('pointerdown', (e) => { if (e.target.closest('button,a,input')) burst(e.clientX, e.clientY, 8, 3.2, undefined, 4); });
   return { burst, confetti };
 })();
 function shake(el = document.body) { if (RM) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }

@@ -2,7 +2,7 @@
 const token = (() => {
   let data = null;
   async function load() {
-    if (!C.CA) { $$('#tokr [data-t]').forEach((b) => (b.textContent = 'at launch')); $('#barPrice').textContent = 'soon'; return; }
+    if (!C.CA) { $('#tokr').hidden = true; $('#tokSoon').hidden = false; $('#barPrice').textContent = 'soon'; return; }
     try {
       const r = await fetch(`https://api.dexscreener.com/tokens/v1/solana/${C.CA}`);
       const pairs = await r.json();
