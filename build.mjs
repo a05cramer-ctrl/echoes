@@ -1,11 +1,13 @@
 // Builds public/index.html (the real site) and dist/preview.html (sample-data preview).
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { build } from 'esbuild';
 const u = (p) => new URL(p, import.meta.url);
 const r = (p) => readFileSync(u(p), 'utf8');
 const head = r('./src/head.html'), body = r('./src/body.html');
 const css = r('./src/styles.css').replace(/url\(FONT:([a-z0-9-]+)\)/g, (_, n) => `url(data:font/woff2;base64,${readFileSync(u(`./src/fonts/${n}.woff2`)).toString('base64')})`);
-const js = readdirSync(u('./src/js/')).filter((f) => f.endsWith('.js')).sort().map((f) => `/* ${f} */\n` + r('./src/js/' + f)).join('\n');
+// explicit order; anything else in src/js is ignored
+const JS = ['00-core', '10-sprites', '15-ambient', '20-hero', '25-scan', '40-feed', '50-board', '60-profile', '70-token', '80-sections', '90-main', '95-parade'].map((n) => n + '.js');
+const js = JS.map((f) => `/* ${f} */\n` + r('./src/js/' + f)).join('\n');
 const app = `<script>\n(() => {\n'use strict';\n${js}\n})();\n</script>`;
 const three = (await build({ entryPoints: [u('./src/3d/index.js').pathname], bundle: true, minify: true, format: 'iife', write: false, legalComments: 'none', target: 'es2020' })).outputFiles[0].text;
 const vx = `<script>\n${three.replace(/<\/script/gi, '<\\/script')}</script>`;
