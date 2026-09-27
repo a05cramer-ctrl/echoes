@@ -1,11 +1,6 @@
 /* PREVIEW BUILD ONLY. Sample data so the page can be looked at before the backend is connected.
    The real site (public/index.html) does not include this file. */
 (() => {
-  const bar = document.createElement('div');
-  bar.style.cssText = 'position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:400;background:#ffd23f;color:#1d1600;font:700 14px "Pixelify Sans",monospace;padding:8px 14px;border-radius:10px;box-shadow:0 4px 0 #000;white-space:nowrap';
-  bar.textContent = 'PREVIEW · sample data, not live';
-  document.body.append(bar);
-
   const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
   let seed = 12345;
   const rr = () => ((seed = Math.imul(seed ^ (seed >>> 15), seed | 1) + 0x6d2b79f5 | 0) >>> 0) / 4294967296;
